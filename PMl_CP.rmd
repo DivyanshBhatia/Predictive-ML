@@ -1,0 +1,56 @@
+Predictive Machine Learning Course Project
+========================================================
+# Executive Summary
+This report Presents a write up on a Machine Learning Algorithm to predict correct class of exercises based on given data. The Attribute Classe is the outcome variable while there are 158 predictor variables to choose from. 
+
+
+### cross validation done in svm
+using parameter cross =10
+```{r}
+library(caret)
+library(kernlab)
+training_data <- read.csv("pml-training_new.csv",header=TRUE,strip.white=TRUE,na.strings=c("",".","NA"))
+training_data <- as.data.frame(training_data)
+training_data[is.na(training_data)]<-0.0
+intrain <- createDataPartition(y=training_data$classe,p=0.75,list=FALSE)
+training <- training_data[intrain,]
+testing <- training_data[-intrain,]
+ncol(training)
+nums <- sapply(training, is.numeric)
+test_nums <- sapply(testing,is.numeric)
+indx <- which(is.na(training[,])==TRUE) 
+test_indx <- which(is.na(testing[,])==TRUE) 
+training = data.frame(training)
+testing = data.frame(testing)
+data_num <- training[,nums]
+
+data_test_nums <- testing[,test_nums]
+M <- abs(cor(data_num))
+diag(M) <- 0
+new_data_num <- data_num[,unique(which(M>0.9,arr.ind=T)[1:ncol(M)])]
+ncol(data_num)
+new_data_test_nums <- data_test_nums[,colnames(new_data_num)]
+new_data_test_nums <- cbind(new_data_test_nums,testing$classe)
+ncol(data_test_nums[,colnames(new_data_num)])
+new_data_num  <- cbind(new_data_num ,training$classe)
+colnames(new_data_num)[ncol(new_data_num)] <- "classe"
+ncol(data_test_nums)
+data_num[13000,123]
+preproc <- preProcess(new_data_num[,-ncol(new_data_num)],method="pca",pcaComp=5)
+trainPC <- predict(preproc,new_data_num[,-ncol(new_data_num)])
+trainPC <- cbind(trainPC,training$classe)
+colnames(trainPC)[ncol(trainPC)]<-("classe")
+library(e1071)
+modelfit <- svm(training$classe~.,kernel = "linear", C=0.1, gamma=1, cross=10, type="C-classification", data=trainPC)
+testPC <- predict(preproc,new_data_test_nums[,-ncol(new_data_test_nums)])
+testPC <- cbind(testPC,testing$classe)
+colnames(testPC)[ncol(testPC)]<-("classe")
+confusionMatrix(testing$classe,predict(modelfit,newdata=testPC))
+```
+
+
+For Other Methods
+```{r}
+#tc <- trainControl("cv",10,savePred=T)
+#fit <- train(classe~.,data=new_data_num,method="rpart",trControl=tc,family=poisson(link = "log"))
+```
